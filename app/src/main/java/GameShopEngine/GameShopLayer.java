@@ -34,6 +34,15 @@ public class GameShopLayer {
         //layer = new Vector4f[height][width];
     }
     
+    public void copyLayer(GameShopLayer src, Vector2f start){
+    
+        for (int y = (int) start.y; y < src.height + start.y; y++){
+           for (int x = (int) start.x; x < src.width + start.x; x++){
+            
+               layer[y][x] = src.layer[y - (int)start.y][x - (int)start.x];
+        } 
+        }
+    }
     
     public void drawRectangle(Vector2f start, Vector2f end, Vector4f color){
     

@@ -4,16 +4,13 @@
  */
 package GameShopEngine.UI;
 
-import GameShopEngine.GameShopLayer;
-
 /**
  *
- * @author lynden
+ * @author gameshopengine
  */
-public class GameShopUILayer extends GameShopLayer {
+public class GameShopOmni {
+ 
+    public GameShopOmni(){
     
-    public GameShopUILayer(int width, int height) {
-        super(width, height);
     }
-    
 }

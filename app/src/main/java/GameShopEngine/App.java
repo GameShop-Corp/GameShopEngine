@@ -9,6 +9,13 @@ import GameShopEngine.PolyHash.GameShopObjectHash;
 import GameShopEngine.PolyHash.GameShopPolyLineHash;
 import GameShopEngine.PolyHash.GameShopPolyMeshHash;
 import GameShopEngine.PolyHash.GameShopPolySurfaceHash;
+import GameShopEngine.UI.GameShopFirstGlyph;
+//import GameShopEngine.UI.Characters.GameShopCharacter;
+//import GameShopEngine.UI.Characters.GameShopCharacterCursor;
+//import GameShopEngine.UI.Characters.GameShopCharacterFontHash;
+//import GameShopEngine.UI.Components.GameShopUIComponent;
+//import GameShopEngine.UI.GameShopUI;
+//import com.jme3.app.Application;
 import com.jme3.math.FastMath;
 //import de.lessvoid.nifty.Nifty;
 //import GameShopEngine.UI.Characters.AlphaNumeric.GameShopCharacterUpperCaseA;
@@ -40,8 +47,9 @@ import static org.lwjgl.system.MemoryUtil.*;
 //import imgui.ImGui;
 //import imgui.app.Application;
 //import imgui.app.Configuration;
+ 
 
-public class App  {
+public class App {
     
  
     
@@ -255,7 +263,7 @@ boolean windowOpen = true;
         GameShopObject gso;
         Vector3f position = new Vector3f(0,0, 0);
         
-        //GameShopUI gsui;
+//        GameShopUI gsui;
         
         public void createShaders(){
         
@@ -385,6 +393,11 @@ boolean windowOpen = true;
             GameShopPolyMeshHash.getInstance().addGameShopPolyMesh("UI-Mesh-1", new GameShopPolyMesh( new GameShopPolySurface[]{GameShopPolySurfaceHash.getInstance().polySurfaceHash.get("UI-Surface-1")}, GameShopATMSHash.getInstance().dictionary.get("UI")));
             
             GameShopObjectHash.getInstance().addGameShopObject("UI-Object-1", new GameShopObject(GameShopPolyMeshHash.getInstance().polyMeshHash.get("UI-Mesh-1")));
+        
+             GameShopFirstGlyph gsf = new GameShopFirstGlyph('A', 50, 50);
+             gsf.draw();
+             GameShopATMSHash.getInstance().dictionary.get("UI").layer.copyLayer(gsf.layer, new Vector2f());// .drawCircle(128, 128, 256,  new Vector4f(127f,127f,127f,127f));
+            
         }
         
         
@@ -509,11 +522,9 @@ boolean windowOpen = true;
                 uiATMS.makeATMS();
                 
                 GameShopUIPolyMesh uiGSPMesh = new GameShopUIPolyMesh(new GameShopPolySurface[]{uiSurface}, uiATMS);
-                
-                //this.gsui = new GameShopUI(uiGSPMesh);
-                
-               // makeUI(this.gsui);
-                
+                */
+            
+                /*
                 GameShopATMS atms = new GameShopATMS(128, 128, new com.jme3.math.Vector4f[]{new com.jme3.math.Vector4f(0, 1, 0, 1)});
 //                atms.layer.drawCircle(50, 50, 100, new Vector4f(0,0,0,1f));
                
@@ -550,7 +561,9 @@ boolean windowOpen = true;
                 GameShopObjectHash.getInstance().objectHash.get("UI-Object-1").updateModelMatrix();
                 
                 System.out.println(GameShopObjectHash.getInstance().objectHash.get("UI-Object-1").rotation);
-                //gsui.setPosition(0, 0, -1.75f);
+               // this.gsui = new GameShopUI();
+
+//gsui.setPosition(0, 0, -1.75f);
    
                 //gsui.updateModelMatrix();
 
@@ -639,12 +652,18 @@ boolean windowOpen = true;
 
     public static void main(String[] args) {
        // System.out.println(new App().getGreeting());
-       
+       //vertexShader
        App app = new App();
        app.run();
-      // launch(app);
+       //launch(app);
        
     }
+
+//    @Override
+//    public void process() {
+//        ImGui.text("Hello World");
+//        //throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+//    }
 
 //    public void makeUI(GameShopUI ui){
 //    
