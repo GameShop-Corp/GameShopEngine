@@ -5,11 +5,14 @@ package GameShopEngine;
 
 //import GameShopEngine.LanguageProcessor.GameShopLanguageProcessor;
 
+import org.joml.RayAabIntersection;
+
 import GameShopEngine.PolyHash.GameShopObjectHash;
 import GameShopEngine.PolyHash.GameShopPolyLineHash;
 import GameShopEngine.PolyHash.GameShopPolyMeshHash;
 import GameShopEngine.PolyHash.GameShopPolySurfaceHash;
 import GameShopEngine.UI.GameShopFirstGlyph;
+import org.lwjgl.nanovg.*;
 //import GameShopEngine.UI.Characters.GameShopCharacter;
 //import GameShopEngine.UI.Characters.GameShopCharacterCursor;
 //import GameShopEngine.UI.Characters.GameShopCharacterFontHash;
@@ -17,6 +20,7 @@ import GameShopEngine.UI.GameShopFirstGlyph;
 //import GameShopEngine.UI.GameShopUI;
 //import com.jme3.app.Application;
 import com.jme3.math.FastMath;
+import java.io.IOException;
 //import de.lessvoid.nifty.Nifty;
 //import GameShopEngine.UI.Characters.AlphaNumeric.GameShopCharacterUpperCaseA;
 //import GameShopEngine.UI.Characters.GameShopCharacter;
@@ -37,9 +41,15 @@ import java.util.ArrayList;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import static org.lwjgl.nanovg.NanoVG.nvgCreateFontMem;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
+//import static org.lwjgl.nanovg.NanoVG.nvgEndFrame;
+import static org.lwjgl.nanovg.NanoVG.*;
+import static org.lwjgl.nanovg.NanoVGGL3.NVG_ANTIALIAS;
+import static org.lwjgl.nanovg.NanoVGGL3.NVG_STENCIL_STROKES;
+import static org.lwjgl.nanovg.NanoVGGL3.*;
 //import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL46.*;
 import static org.lwjgl.system.MemoryStack.*;
@@ -57,6 +67,7 @@ public class App {
 
     // The window handle
 	private long window;
+        private long nvgContext;
         
 boolean windowOpen = true;
  
@@ -260,6 +271,75 @@ boolean windowOpen = true;
 "    fragColor = texture(txtSampler, outTextCoord);\n" +
 "}";
 
+        
+        public String computeShaderPicking = "#version 430 core\n"
+                + "\n"
+                + "// Bindings for SSBOs and image output\n"
+                + "layout(std430, binding = 0) buffer ObjectBuffer {\n"
+                + "    ObjectData objects[];\n"
+                + "};\n"
+                + "\n"
+                + "layout(std430, binding = 1) buffer ResultBuffer {\n"
+                + "    uint objectId;\n"
+                + "    float depth;\n"
+                + "};\n"
+                + "\n"
+                + "// Mouse coordinates are passed as uniforms\n"
+                + "uniform vec2 mouseCoords;\n"
+                + "uniform vec2 windowSize;\n"
+                + "\n"
+                + "// Camera matrices for ray generation\n"
+                + "uniform mat4 inverseViewProjectionMatrix;\n"
+                + "\n"
+                + "layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
+                + "\n"
+                + "void main() {\n"
+                + "    // Generate a ray from the camera through the mouse coordinates\n"
+                + "    vec2 ndc = (mouseCoords / windowSize) * 2.0 - 1.0;\n"
+                + "    vec4 rayStart_clip = vec4(ndc.x, ndc.y, -1.0, 1.0);\n"
+                + "    vec4 rayEnd_clip = vec4(ndc.x, ndc.y, 1.0, 1.0);\n"
+                + "\n"
+                + "    vec4 rayStart_world = inverseViewProjectionMatrix * rayStart_clip;\n"
+                + "    rayStart_world /= rayStart_world.w;\n"
+                + "\n"
+                + "    vec4 rayEnd_world = inverseViewProjectionMatrix * rayEnd_clip;\n"
+                + "    rayEnd_world /= rayEnd_world.w;\n"
+                + "\n"
+                + "    vec3 rayDir_world = normalize(rayEnd_world.xyz - rayStart_world.xyz);\n"
+                + "\n"
+                + "    uint hitId = 0;\n"
+                + "    float minDepth = 1e30; // A very large number\n"
+                + "\n"
+                + "    // Iterate over all objects to test for intersection\n"
+                + "    for (int i = 0; i < objects.length(); ++i) {\n"
+                + "        // Perform ray-AABB intersection test\n"
+                + "        float t0 = 0.0, t1 = 0.0;\n"
+                + "        bool intersection = intersectRayAABB(rayStart_world.xyz, rayDir_world, objects[i].minBounds, objects[i].maxBounds, t0, t1);\n"
+                + "\n"
+                + "        if (intersection && t0 > 0.0 && t0 < minDepth) {\n"
+                + "            hitId = objects[i].objectId;\n"
+                + "            minDepth = t0;\n"
+                + "        }\n"
+                + "    }\n"
+                + "\n"
+                + "    // Write the result to the output buffer\n"
+                + "    objectId = hitId;\n"
+                + "    depth = minDepth;\n"
+                + "}\n"
+                + "\n"
+                + "// Ray-AABB intersection function (can be optimized)\n"
+                + "bool intersectRayAABB(vec3 rayOrigin, vec3 rayDirection, vec3 minBounds, vec3 maxBounds, out float t0, out float t1) {\n"
+                + "    vec3 invDir = 1.0 / rayDirection;\n"
+                + "    vec3 t_min = (minBounds - rayOrigin) * invDir;\n"
+                + "    vec3 t_max = (maxBounds - rayOrigin) * invDir;\n"
+                + "    vec3 t_near = min(t_min, t_max);\n"
+                + "    vec3 t_far = max(t_min, t_max);\n"
+                + "\n"
+                + "    t0 = max(max(t_near.x, t_near.y), t_near.z);\n"
+                + "    t1 = min(min(t_far.x, t_far.y), t_far.z);\n"
+                + "\n"
+                + "    return t0 <= t1;\n"
+                + "}";
         GameShopObject gso;
         Vector3f position = new Vector3f(0,0, 0);
         
@@ -346,34 +426,34 @@ boolean windowOpen = true;
             
             GameShopPolyLineHash.getInstance().addGameShopPolyLine("UI-Line-1", new GameShopPolyLine(new com.jme3.math.Vector3f[]{
             
-                new com.jme3.math.Vector3f(1, 1, 0),
-                new com.jme3.math.Vector3f(.33f, 1, 0),
-                new com.jme3.math.Vector3f(-.33f, 1, 0),
-                new com.jme3.math.Vector3f(-1, 1 , 0)
+                new com.jme3.math.Vector3f(-1, -1, 0),
+                new com.jme3.math.Vector3f(-.33f, -1, 0),
+                new com.jme3.math.Vector3f(.33f, -1, 0),
+                new com.jme3.math.Vector3f(1, -1 , 0)
                     
             }, 2));
             
             GameShopPolyLineHash.getInstance().addGameShopPolyLine("UI-Line-2", new GameShopPolyLine(new com.jme3.math.Vector3f[]{
-                new com.jme3.math.Vector3f(1, .33f, 0),
-                new com.jme3.math.Vector3f(.33f, .33f, 0),
-                new com.jme3.math.Vector3f(-.33f, .33f, 0),
-                new com.jme3.math.Vector3f(-1, .33f, 0)
+                new com.jme3.math.Vector3f(-1, -.33f, 0),
+                new com.jme3.math.Vector3f(-.33f, -.33f, 0),
+                new com.jme3.math.Vector3f(.33f, -.33f, 0),
+                new com.jme3.math.Vector3f(1, -.33f, 0)
 
             }, 2));
             
             GameShopPolyLineHash.getInstance().addGameShopPolyLine("UI-Line-3", new GameShopPolyLine(new com.jme3.math.Vector3f[]{
-                new com.jme3.math.Vector3f(1, -.33f, 0),
-                new com.jme3.math.Vector3f(.33f, -.33f, 0),
-                new com.jme3.math.Vector3f(-.33f, -.33f, 0),
-                new com.jme3.math.Vector3f(-1, -.33f, 0)
+                new com.jme3.math.Vector3f(-1, .33f, 0),
+                new com.jme3.math.Vector3f(-.33f, .33f, 0),
+                new com.jme3.math.Vector3f(.33f, .33f, 0),
+                new com.jme3.math.Vector3f(1, .33f, 0)
 
             }, 2));
             
             GameShopPolyLineHash.getInstance().addGameShopPolyLine("UI-Line-4", new GameShopPolyLine(new com.jme3.math.Vector3f[]{
-                new com.jme3.math.Vector3f(1, -1, 0),
-                new com.jme3.math.Vector3f(.33f, -1, 0),
-                new com.jme3.math.Vector3f(-.33f, -1, 0),
-                new com.jme3.math.Vector3f(-1, -1, 0)
+                new com.jme3.math.Vector3f(-1, 1, 0),
+                new com.jme3.math.Vector3f(-.33f, 1, 0),
+                new com.jme3.math.Vector3f(.33f, 1, 0),
+                new com.jme3.math.Vector3f(1, 1, 0)
 
             }, 2));
             
@@ -394,9 +474,10 @@ boolean windowOpen = true;
             
             GameShopObjectHash.getInstance().addGameShopObject("UI-Object-1", new GameShopObject(GameShopPolyMeshHash.getInstance().polyMeshHash.get("UI-Mesh-1")));
         
-             GameShopFirstGlyph gsf = new GameShopFirstGlyph('A', 50, 50);
+             GameShopFirstGlyph gsf = new GameShopFirstGlyph('A', 256, 256);
              gsf.draw();
-             GameShopATMSHash.getInstance().dictionary.get("UI").layer.copyLayer(gsf.layer, new Vector2f());// .drawCircle(128, 128, 256,  new Vector4f(127f,127f,127f,127f));
+             
+             GameShopATMSHash.getInstance().dictionary.get("UI").layer.copyLayer(gsf.layer);// .drawCircle(128, 128, 256,  new Vector4f(127f,127f,127f,127f));
             
         }
         
@@ -410,6 +491,14 @@ boolean windowOpen = true;
 		// creates the GLCapabilities instance and makes the OpenGL
 		// bindings available for use.
 		GL.createCapabilities();
+                
+                nvgContext = nvgCreate(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // Use NVG_ANTIALIAS for smoother lines
+        
+                if (nvgContext == NULL) {
+            
+                    throw new RuntimeException("Failed to create NanoVG context");
+       
+                }
                 
                 //
                 glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE); // before creating the window
@@ -604,6 +693,79 @@ boolean windowOpen = true;
                     gspm.draw();
                 }
                 
+                /*
+                // Java (LWJGL)
+// Populate buffer with object data
+int id = 0;
+ for (GameShopPolyMesh gspm: GameShopPolyMeshHash.getInstance().polyMeshHash.values()){
+    for (GameShopPolySurface gsps: gspm.gspSurfaces){     
+//        int x = 0;
+//        int x1 = 1;
+//        int y = 0;
+//        int y1 = 1;
+        ByteBuffer objectDataBuffer = BufferUtils.createByteBuffer(id * (4 + 12 + 12));
+    
+        for (int liney = 0; liney < gsps.vInfinitesimals.length - 1; liney++){
+            for (int linex = 0; linex < gsps.vInfinitesimals.length - 1; linex++){
+        
+                objectDataBuffer.putInt(id);
+                objectDataBuffer.put(gsps.vInfinitesimals[liney].infinitesimals[linex]);
+
+                id++;
+            }
+        }
+        
+        
+//        for (MyObject obj : sceneObjects) {
+//            objectDataBuffer.putInt(obj.getId());
+//            obj.getMinBounds().get(objectDataBuffer);
+//            obj.getMaxBounds().get(objectDataBuffer);
+//        }
+        objectDataBuffer.flip();
+
+        // Create and bind the SSBO
+        int ssbo = GL43.glGenBuffers();
+        GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
+        GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, objectDataBuffer, GL43.GL_STATIC_READ);
+        GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 0, ssbo); // Bind to binding point 0
+    
+        */
+    
+    //}
+ 
+                
+                /*
+                       // Start NanoVG frame
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                IntBuffer width = stack.mallocInt(1);
+                IntBuffer height = stack.mallocInt(1);
+                glfwGetFramebufferSize(window, width, height);
+                nvgBeginFrame(nvgContext, width.get(0), height.get(0), 1.0f); // Last parameter is device pixel ratio
+            }
+
+            
+            // Draw a rectangle
+            nvgBeginPath(nvgContext);
+            nvgRect(nvgContext, 100, 100, 200, 150);
+            nvgFillColor(nvgContext, nvgRGBAf(1.0f, 0.0f, 0.0f, 1.0f, NVGColor.malloc()));
+            nvgFill(nvgContext);
+
+            // Draw a circle
+            nvgBeginPath(nvgContext);
+            nvgCircle(nvgContext, 400, 300, 75);
+            nvgFillColor(nvgContext, nvgRGBAf(0.0f, 1.0f, 0.0f, 1.0f, NVGColor.malloc()));
+            nvgFill(nvgContext);
+
+            // Draw text
+            nvgFontSize(nvgContext, 30.0f);
+            nvgFontFace(nvgContext, "sans"); // Assuming a font named "sans" is loaded or default is used
+            nvgFillColor(nvgContext, nvgRGBAf(1.0f, 1.0f, 1.0f, 1.0f, NVGColor.malloc()));
+            nvgText(nvgContext, 50, 50, "Hello NanoVG!");
+
+            // End NanoVG frame
+            nvgEndFrame(nvgContext);
+            
+            */
                 //gsn.runLoop();
                  glfwSwapBuffers(window); // swap the color buffers
 
@@ -618,6 +780,57 @@ boolean windowOpen = true;
                 reportMemory();
                 free();
 	}
+
+        
+        /*
+        
+        private static final String FONT_NAME = "OpenSans"; // A name to reference the font
+    private static ByteBuffer fontBuffer; // Must be kept in memory
+
+    public static void loadFont(long vgContext) throws IOException {
+        // Load the font file into a ByteBuffer
+        // Replace "/fonts/OpenSans-Bold.ttf" with the actual path to your font file
+        fontBuffer = loadResourceToByteBuffer("/fonts/OpenSans-Bold.ttf", 150 * 1024);
+
+        // Create the font in NanoVG using the loaded ByteBuffer
+        int fontId = org.lwjgl.nanovg.NanoVG.nvgCreateFontMem(vgContext, FONT_NAME, fontBuffer, 0);
+
+        if (fontId == -1) {
+            throw new RuntimeException("Could not add font: " + FONT_NAME);
+        }
+        System.out.println("Font '" + FONT_NAME + "' loaded with ID: " + fontId);
+    }
+
+    // Helper function to load a resource into a ByteBuffer
+    private static ByteBuffer loadResourceToByteBuffer(String resourcePath, int bufferSize) throws IOException {
+        ByteBuffer buffer = memAlloc(bufferSize);
+        try (java.io.InputStream source = App.class.getResourceAsStream(resourcePath)) {
+            if (source == null) {
+                throw new IOException("Resource not found: " + resourcePath);
+            }
+            byte[] data = new byte[1024];
+            int read;
+            while ((read = source.read(data, 0, data.length)) != -1) {
+                if (buffer.remaining() < read) {
+                    // Reallocate if buffer is too small
+                    buffer = MemoryUtil.memRealloc(buffer, buffer.capacity() * 2);
+                }
+                buffer.put(data, 0, read);
+            }
+            buffer.flip();
+        }
+        return buffer;
+    }
+
+    public static void freeFontBuffer() {
+        if (fontBuffer != null) {
+            memFree(fontBuffer);
+            fontBuffer = null;
+        }
+    }
+    
+    */
+
         
         public void reportMemory(){
         

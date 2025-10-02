@@ -30,8 +30,18 @@ public class GameShopFirstGlyph extends GameShopGlyph {
                 new Vector3f(percentage("width", 50), percentage("height", 100), 0),
          
                         
-            }, 8);
-            layer.drawPolyLine(cl, (short) (percentage("width", 5) + percentage("height", 5)), new Vector4f(0,0,0,255));
+            }, 32);
+            layer.drawPolyLine(cl, (short) (percentage("width", 5) + percentage("height", 5)), new Vector4f(0,0,127,127));
+           GameShopPolyLine cl1 = new GameShopPolyLine(new Vector3f[]{
+            
+                new Vector3f(percentage("width", 50), percentage("height", 100), 0),
+                new Vector3f(percentage("width", 70), percentage("height", 80), 0),
+                new Vector3f(percentage("width", 90), percentage("height", 40), 0),
+                new Vector3f(percentage("width", 100), percentage("height", 0), 0),
+         
+                        
+            }, 32);
+            layer.drawPolyLine(cl1, (short) (percentage("width", 5) + percentage("height", 5)), new Vector4f(0,0,127,127));
         
         
         }
