@@ -693,23 +693,29 @@ boolean windowOpen = true;
                     gspm.draw();
                 }
                 
-                /*
+                
                 // Java (LWJGL)
 // Populate buffer with object data
+/*
 int id = 0;
+for (GameShopObject gso: GameShopObjectHash.getInstance().objectHash.values()){
  for (GameShopPolyMesh gspm: GameShopPolyMeshHash.getInstance().polyMeshHash.values()){
     for (GameShopPolySurface gsps: gspm.gspSurfaces){     
 //        int x = 0;
 //        int x1 = 1;
 //        int y = 0;
 //        int y1 = 1;
-        ByteBuffer objectDataBuffer = BufferUtils.createByteBuffer(id * (4 + 12 + 12));
+        ByteBuffer objectDataBuffer = BufferUtils.createByteBuffer(1 * (4 + 12 + 12 + 36));
     
         for (int liney = 0; liney < gsps.vInfinitesimals.length - 1; liney++){
             for (int linex = 0; linex < gsps.vInfinitesimals.length - 1; linex++){
         
                 objectDataBuffer.putInt(id);
-                objectDataBuffer.put(gsps.vInfinitesimals[liney].infinitesimals[linex]);
+                org.joml.Vector3f min = GameShopTypeConverter.getInstance().convertVector3fFromJMEToJOML(gsps.vInfinitesimals[liney].infinitesimals[linex]);
+                min.get(objectDataBuffer);
+                org.joml.Vector3f max = GameShopTypeConverter.getInstance().convertVector3fFromJMEToJOML(gsps.vInfinitesimals[liney + 1].infinitesimals[linex + 1]);
+                max.get(objectDataBuffer);
+                
 
                 id++;
             }
@@ -729,10 +735,11 @@ int id = 0;
         GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, objectDataBuffer, GL43.GL_STATIC_READ);
         GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 0, ssbo); // Bind to binding point 0
     
-        */
+    }
     
-    //}
- 
+    }
+}
+*/
                 
                 /*
                        // Start NanoVG frame
@@ -775,6 +782,7 @@ int id = 0;
 		glfwPollEvents();
                
 		}
+                
     
       
                 reportMemory();
@@ -830,7 +838,7 @@ int id = 0;
     }
     
     */
-
+        
         
         public void reportMemory(){
         

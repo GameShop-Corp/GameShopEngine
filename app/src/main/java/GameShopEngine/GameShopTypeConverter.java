@@ -35,4 +35,14 @@ public class GameShopTypeConverter {
        
            return new com.jme3.math.Vector4f(vector.x, vector.y, vector.z, vector.w);
        }
+        
+        public org.joml.Vector3f convertVector3fFromJMEToJOML(com.jme3.math.Vector3f vector){
+        
+            return new org.joml.Vector3f(vector.x, vector.y, vector.z);
+        }
+        
+        public org.joml.Vector4f convertVector4fFromJMEToJOML(com.jme3.math.Vector4f vector){
+        
+            return new org.joml.Vector4f(vector.x, vector.y, vector.z, vector.w);
+        }
 }
