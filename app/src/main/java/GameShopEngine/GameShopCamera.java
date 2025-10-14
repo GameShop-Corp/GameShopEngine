@@ -4,6 +4,8 @@
  */
 package GameShopEngine;
 
+import com.jme3.math.Quaternion;
+import com.jme3.renderer.Camera;
 import org.joml.*;
 
 /**
@@ -22,6 +24,7 @@ public class GameShopCamera {
     public Vector3f position;
     public Vector3f rotation;
     
+    Camera cam;
     
     public GameShopCamera(Vector3f position, Vector3f rotation, int width, int height){
     
@@ -32,12 +35,16 @@ public class GameShopCamera {
         viewMatrix = new Matrix4f();
         updateProjMatrix(width, height);
         
+        cam = new Camera();
+        cam.setLocation(GameShopTypeConverter.getInstance().convertVector3FromJOMLToJME(position));
+        cam.setRotation(new Quaternion().fromAngles(rotation.x, rotation.y, rotation.z));
     }
     
     public void updateProjMatrix(int width, int height){
     
         projMatrix.setPerspective(FOV, (float)width/height, Z_NEAR, Z_FAR);
         projMatrix.lookAt(position, new Vector3f(0, 0, -10), new Vector3f(0, 1, 0));
+        
     }
     
     public Matrix4f getViewMatrix() {

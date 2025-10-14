@@ -146,6 +146,7 @@ boolean windowOpen = true;
                    // GameShopCursor.getInstance().clicked = false;
                     GameShopCursor.getInstance().cursorPosition.set(xPos, yPos);
                     GameShopCursor.getInstance().convertToGLPosition();
+                    
                    // GameShopCursor.getInstance().clicked = false;
                     //}
                 });
@@ -157,7 +158,7 @@ boolean windowOpen = true;
                     
                         GameShopCursor.getInstance().clicked = true;
                         System.out.println(GameShopCursor.getInstance().cursorPosition);
-               
+                        GameShopCursor.getInstance().rayCast();
                     } 
 //                    
                     else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE){
@@ -272,74 +273,74 @@ boolean windowOpen = true;
 "}";
 
         
-        public String computeShaderPicking = "#version 430 core\n"
-                + "\n"
-                + "// Bindings for SSBOs and image output\n"
-                + "layout(std430, binding = 0) buffer ObjectBuffer {\n"
-                + "    ObjectData objects[];\n"
-                + "};\n"
-                + "\n"
-                + "layout(std430, binding = 1) buffer ResultBuffer {\n"
-                + "    uint objectId;\n"
-                + "    float depth;\n"
-                + "};\n"
-                + "\n"
-                + "// Mouse coordinates are passed as uniforms\n"
-                + "uniform vec2 mouseCoords;\n"
-                + "uniform vec2 windowSize;\n"
-                + "\n"
-                + "// Camera matrices for ray generation\n"
-                + "uniform mat4 inverseViewProjectionMatrix;\n"
-                + "\n"
-                + "layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
-                + "\n"
-                + "void main() {\n"
-                + "    // Generate a ray from the camera through the mouse coordinates\n"
-                + "    vec2 ndc = (mouseCoords / windowSize) * 2.0 - 1.0;\n"
-                + "    vec4 rayStart_clip = vec4(ndc.x, ndc.y, -1.0, 1.0);\n"
-                + "    vec4 rayEnd_clip = vec4(ndc.x, ndc.y, 1.0, 1.0);\n"
-                + "\n"
-                + "    vec4 rayStart_world = inverseViewProjectionMatrix * rayStart_clip;\n"
-                + "    rayStart_world /= rayStart_world.w;\n"
-                + "\n"
-                + "    vec4 rayEnd_world = inverseViewProjectionMatrix * rayEnd_clip;\n"
-                + "    rayEnd_world /= rayEnd_world.w;\n"
-                + "\n"
-                + "    vec3 rayDir_world = normalize(rayEnd_world.xyz - rayStart_world.xyz);\n"
-                + "\n"
-                + "    uint hitId = 0;\n"
-                + "    float minDepth = 1e30; // A very large number\n"
-                + "\n"
-                + "    // Iterate over all objects to test for intersection\n"
-                + "    for (int i = 0; i < objects.length(); ++i) {\n"
-                + "        // Perform ray-AABB intersection test\n"
-                + "        float t0 = 0.0, t1 = 0.0;\n"
-                + "        bool intersection = intersectRayAABB(rayStart_world.xyz, rayDir_world, objects[i].minBounds, objects[i].maxBounds, t0, t1);\n"
-                + "\n"
-                + "        if (intersection && t0 > 0.0 && t0 < minDepth) {\n"
-                + "            hitId = objects[i].objectId;\n"
-                + "            minDepth = t0;\n"
-                + "        }\n"
-                + "    }\n"
-                + "\n"
-                + "    // Write the result to the output buffer\n"
-                + "    objectId = hitId;\n"
-                + "    depth = minDepth;\n"
-                + "}\n"
-                + "\n"
-                + "// Ray-AABB intersection function (can be optimized)\n"
-                + "bool intersectRayAABB(vec3 rayOrigin, vec3 rayDirection, vec3 minBounds, vec3 maxBounds, out float t0, out float t1) {\n"
-                + "    vec3 invDir = 1.0 / rayDirection;\n"
-                + "    vec3 t_min = (minBounds - rayOrigin) * invDir;\n"
-                + "    vec3 t_max = (maxBounds - rayOrigin) * invDir;\n"
-                + "    vec3 t_near = min(t_min, t_max);\n"
-                + "    vec3 t_far = max(t_min, t_max);\n"
-                + "\n"
-                + "    t0 = max(max(t_near.x, t_near.y), t_near.z);\n"
-                + "    t1 = min(min(t_far.x, t_far.y), t_far.z);\n"
-                + "\n"
-                + "    return t0 <= t1;\n"
-                + "}";
+//        public String computeShaderPicking = "#version 330 core\n"
+//                + "\n"
+//                + "// Bindings for SSBOs and image output\n"
+//                + "layout(std430, binding = 0) buffer ObjectBuffer {\n"
+//                + "    ObjectData objects[];\n"
+//                + "};\n"
+//                + "\n"
+//                + "layout(std430, binding = 1) buffer ResultBuffer {\n"
+//                + "    uint objectId;\n"
+//                + "    float depth;\n"
+//                + "};\n"
+//                + "\n"
+//                + "// Mouse coordinates are passed as uniforms\n"
+//                + "uniform vec2 mouseCoords;\n"
+//                + "uniform vec2 windowSize;\n"
+//                + "\n"
+//                + "// Camera matrices for ray generation\n"
+//                + "uniform mat4 inverseViewProjectionMatrix;\n"
+//                + "\n"
+//                + "layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
+//                + "\n"
+//                + "void main() {\n"
+//                + "    // Generate a ray from the camera through the mouse coordinates\n"
+//                + "    vec2 ndc = (mouseCoords / windowSize) * 2.0 - 1.0;\n"
+//                + "    vec4 rayStart_clip = vec4(ndc.x, ndc.y, -1.0, 1.0);\n"
+//                + "    vec4 rayEnd_clip = vec4(ndc.x, ndc.y, 1.0, 1.0);\n"
+//                + "\n"
+//                + "    vec4 rayStart_world = inverseViewProjectionMatrix * rayStart_clip;\n"
+//                + "    rayStart_world /= rayStart_world.w;\n"
+//                + "\n"
+//                + "    vec4 rayEnd_world = inverseViewProjectionMatrix * rayEnd_clip;\n"
+//                + "    rayEnd_world /= rayEnd_world.w;\n"
+//                + "\n"
+//                + "    vec3 rayDir_world = normalize(rayEnd_world.xyz - rayStart_world.xyz);\n"
+//                + "\n"
+//                + "    uint hitId = 0;\n"
+//                + "    float minDepth = 1e30; // A very large number\n"
+//                + "\n"
+//                + "    // Iterate over all objects to test for intersection\n"
+//                + "    for (int i = 0; i < objects.length(); ++i) {\n"
+//                + "        // Perform ray-AABB intersection test\n"
+//                + "        float t0 = 0.0, t1 = 0.0;\n"
+//                + "        bool intersection = intersectRayAABB(rayStart_world.xyz, rayDir_world, objects[i].minBounds, objects[i].maxBounds, t0, t1);\n"
+//                + "\n"
+//                + "        if (intersection && t0 > 0.0 && t0 < minDepth) {\n"
+//                + "            hitId = objects[i].objectId;\n"
+//                + "            minDepth = t0;\n"
+//                + "        }\n"
+//                + "    }\n"
+//                + "\n"
+//                + "    // Write the result to the output buffer\n"
+//                + "    objectId = hitId;\n"
+//                + "    depth = minDepth;\n"
+//                + "}\n"
+//                + "\n"
+//                + "// Ray-AABB intersection function (can be optimized)\n"
+//                + "bool intersectRayAABB(vec3 rayOrigin, vec3 rayDirection, vec3 minBounds, vec3 maxBounds, out float t0, out float t1) {\n"
+//                + "    vec3 invDir = 1.0 / rayDirection;\n"
+//                + "    vec3 t_min = (minBounds - rayOrigin) * invDir;\n"
+//                + "    vec3 t_max = (maxBounds - rayOrigin) * invDir;\n"
+//                + "    vec3 t_near = min(t_min, t_max);\n"
+//                + "    vec3 t_far = max(t_min, t_max);\n"
+//                + "\n"
+//                + "    t0 = max(max(t_near.x, t_near.y), t_near.z);\n"
+//                + "    t1 = min(min(t_far.x, t_far.y), t_far.z);\n"
+//                + "\n"
+//                + "    return t0 <= t1;\n"
+//                + "}";
         GameShopObject gso;
         Vector3f position = new Vector3f(0,0, 0);
         
@@ -696,50 +697,58 @@ boolean windowOpen = true;
                 
                 // Java (LWJGL)
 // Populate buffer with object data
-/*
-int id = 0;
-for (GameShopObject gso: GameShopObjectHash.getInstance().objectHash.values()){
- for (GameShopPolyMesh gspm: GameShopPolyMeshHash.getInstance().polyMeshHash.values()){
-    for (GameShopPolySurface gsps: gspm.gspSurfaces){     
-//        int x = 0;
-//        int x1 = 1;
-//        int y = 0;
-//        int y1 = 1;
-        ByteBuffer objectDataBuffer = BufferUtils.createByteBuffer(1 * (4 + 12 + 12 + 36));
-    
-        for (int liney = 0; liney < gsps.vInfinitesimals.length - 1; liney++){
-            for (int linex = 0; linex < gsps.vInfinitesimals.length - 1; linex++){
-        
-                objectDataBuffer.putInt(id);
-                org.joml.Vector3f min = GameShopTypeConverter.getInstance().convertVector3fFromJMEToJOML(gsps.vInfinitesimals[liney].infinitesimals[linex]);
-                min.get(objectDataBuffer);
-                org.joml.Vector3f max = GameShopTypeConverter.getInstance().convertVector3fFromJMEToJOML(gsps.vInfinitesimals[liney + 1].infinitesimals[linex + 1]);
-                max.get(objectDataBuffer);
-                
 
-                id++;
-            }
-        }
-        
-        
-//        for (MyObject obj : sceneObjects) {
-//            objectDataBuffer.putInt(obj.getId());
-//            obj.getMinBounds().get(objectDataBuffer);
-//            obj.getMaxBounds().get(objectDataBuffer);
+//
+//int id = 0;
+//for (GameShopObject gso: GameShopObjectHash.getInstance().objectHash.values()){
+// for (GameShopPolyMesh gspm: GameShopPolyMeshHash.getInstance().polyMeshHash.values()){
+//    for (GameShopPolySurface gsps: gspm.gspSurfaces){     
+////        int x = 0;
+////        int x1 = 1;
+////        int y = 0;
+////        int y1 = 1;
+//        //ByteBuffer objectDataBuffer = BufferUtils.createByteBuffer(1 * (4 + 12 + 12));
+//    
+//        for (int liney = 0; liney < gsps.vInfinitesimals.length - 1; liney++){
+//            for (int linex = 0; linex < gsps.vInfinitesimals.length - 1; linex++){
+//        
+//               // objectDataBuffer.putInt(id);
+//                org.joml.Vector3f min = GameShopTypeConverter.getInstance().convertVector3fFromJMEToJOML(gsps.vInfinitesimals[liney].infinitesimals[linex]);
+//                //org.joml.Vector4f min4f = new org.joml.Vector4f(min.x, min.y, min.z, 1.0f);
+//                //min.get(objectDataBuffer);
+//                org.joml.Vector3f max = GameShopTypeConverter.getInstance().convertVector3fFromJMEToJOML(gsps.vInfinitesimals[liney + 1].infinitesimals[linex + 1]);
+//                //org.joml.Vector4f max4f = new org.joml.Vector4f(max.x, max.y, max.z, 1.0f);
+//
+////max.get(objectDataBuffer);
+//                org.joml.Matrix4f projMatrix = new org.joml.Matrix4f(GameShopCameraHub.getInstance().gsCameras.get("UI").projMatrix);
+//                org.joml.Matrix4f modelMatrix = new org.joml.Matrix4f(GameShopObjectHash.getInstance().objectHash.get("UI-Object-1").getModelMatrix());
+//                org.joml.Matrix4f viewMatrix = new org.joml.Matrix4f(GameShopCameraHub.getInstance().gsCameras.get("UI").getViewMatrix());
+//                //modelMatrix.mul(viewMatrix.mul(projMatrix)).transformPosition(min4f);
+//                //modelMatrix.mul(viewMatrix.mul(projMatrix)).transformPosition(max4f);
+//                modelMatrix.transformPosition(min);
+//                modelMatrix.transformPosition(max);
+//                System.out.println("Min: " + min);
+//                System.out.println("Max: " +  max);
+//        // GameShopUniformHub.getInstance().get(GameShopShaderHash.getInstance().getGLShaderProgram("Hello GameShop")).setUniform("txtSampler", 0);
+// 
+//
+//                id++;
+//            }
 //        }
-        objectDataBuffer.flip();
+//        
+//        
+////        for (MyObject obj : sceneObjects) {
+////            objectDataBuffer.putInt(obj.getId());
+////            obj.getMinBounds().get(objectDataBuffer);
+////            obj.getMaxBounds().get(objectDataBuffer);
+////        }
+////        obj43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 0, ssbo); // Bind to binding point 0
+//    
+//    }
+//    
+//    }
+//}
 
-        // Create and bind the SSBO
-        int ssbo = GL43.glGenBuffers();
-        GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
-        GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, objectDataBuffer, GL43.GL_STATIC_READ);
-        GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 0, ssbo); // Bind to binding point 0
-    
-    }
-    
-    }
-}
-*/
                 
                 /*
                        // Start NanoVG frame
