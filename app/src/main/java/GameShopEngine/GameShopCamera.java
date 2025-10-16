@@ -35,9 +35,9 @@ public class GameShopCamera {
         viewMatrix = new Matrix4f();
         updateProjMatrix(width, height);
         
-        cam = new Camera();
-        cam.setLocation(GameShopTypeConverter.getInstance().convertVector3FromJOMLToJME(position));
-        cam.setRotation(new Quaternion().fromAngles(rotation.x, rotation.y, rotation.z));
+//        cam = new Camera();
+//        cam.setLocation(GameShopTypeConverter.getInstance().convertVector3FromJOMLToJME(position));
+//        cam.setRotation(new Quaternion().fromAngles(rotation.x, rotation.y, rotation.z));
     }
     
     public void updateProjMatrix(int width, int height){

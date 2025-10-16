@@ -111,11 +111,14 @@ for (GameShopObject gso: GameShopObjectHash.getInstance().objectHash.values()){
                 min4f.mul(modelMatrix);
                 max4f.mul(modelMatrix);
                 //modelMatrix.transformPosition(max);
+//                System.out.println("ProjMatrix: " + projMatrix);
+//                System.out.println("InvProjMatrix: " +  invProjMatrix);
+//                System.out.println("Dir: " + dir);
                 System.out.println("Min: " + min4f);
                 System.out.println("Max: " +  max4f);
                 System.out.println("Dir: " + dir);
                 
-                Ray ray = new Ray(GameShopTypeConverter.getInstance().convertVector3FromJOMLToJME(GameShopCameraHub.getInstance().gsCameras.get("UI").position), GameShopTypeConverter.getInstance().convertVector3FromJOMLToJME(new Vector3f(dir.x, dir.y, dir.z)));
+                Ray ray = new Ray(GameShopTypeConverter.getInstance().convertVector3FromJOMLToJME(GameShopCameraHub.getInstance().gsCameras.get("UI").position), new com.jme3.math.Vector3f(0, 0, -1f));//GameShopTypeConverter.getInstance().convertVector3FromJOMLToJME(new Vector3f(dir.x, dir.y, dir.z)));
                 
                 com.jme3.math.Vector3f result = new com.jme3.math.Vector3f();
                 boolean upper = ray.intersectWhere(GameShopTypeConverter.getInstance().convertVector3FromJOMLToJME(min), GameShopTypeConverter.getInstance().convertVector3FromJOMLToJME(upperMid), GameShopTypeConverter.getInstance().convertVector3FromJOMLToJME(max), result);
